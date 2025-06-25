@@ -1,0 +1,70 @@
+-- Таблица пользователей
+CREATE TABLE Users (
+    user_id SERIAL PRIMARY KEY,
+    tg_id BIGINT UNIQUE NOT NULL,  -- Telegram ID пользователя
+    name VARCHAR(100) NOT NULL,    -- Имя
+    group_name VARCHAR(100),        -- Группа (учебная/рабочая)
+    age INTEGER,                   -- Возраст
+    description TEXT,              -- Описание (необязательное)
+    photo BYTEA,                   -- Фото (необязательное, можно хранить ссылку вместо BYTEA)
+    goal VARCHAR(20) NOT NULL,     -- Цель: friendship/relationship/teammate
+    gender VARCHAR(1) NOT NULL,    -- Пол: M/F
+    specialty VARCHAR(100),        -- Специальность
+    registration_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    last_active TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    is_active BOOLEAN DEFAULT TRUE -- Флаг активности профиля
+);
+
+-- Таблица лайков
+CREATE TABLE Likes (
+    like_id SERIAL PRIMARY KEY,
+    sender_id INTEGER NOT NULL REFERENCES Users(user_id),  -- Кто лайкнул
+    receiver_id INTEGER NOT NULL REFERENCES Users(user_id), -- Кого лайкнули
+    like_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    is_mutual BOOLEAN DEFAULT FALSE,                       -- Взаимный ли лайк
+    UNIQUE(sender_id, receiver_id)                          -- Один лайк от пользователя к пользователю
+);
+
+-- Таблица просмотров профилей (для рекомендаций)
+CREATE TABLE Profile_Views (
+    view_id SERIAL PRIMARY KEY,
+    viewer_id INTEGER NOT NULL REFERENCES Users(user_id),
+    viewed_id INTEGER NOT NULL REFERENCES Users(user_id),
+    view_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(viewer_id, viewed_id)
+);
+
+CREATE TABLE reports (
+    report_id SERIAL PRIMARY KEY,
+    reporter_id BIGINT REFERENCES Users(user_id),
+    reported_user_id BIGINT REFERENCES Users(user_id),
+    reason TEXT,
+    report_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Таблица фильтров/предпочтений пользователей
+CREATE TABLE User_Preferences (
+    preference_id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES Users(user_id),
+    preferred_gender VARCHAR(1),           -- Предпочитаемый пол
+    min_age INTEGER,                       -- Минимальный возраст
+    max_age INTEGER,                       -- Максимальный возраст
+    preferred_goal VARCHAR(20),            -- Предпочитаемая цель
+    preferred_specialty VARCHAR(100)       -- Предпочитаемая специальность
+);
+
+-- Индексы для таблицы Users
+CREATE INDEX idx_users_goal ON Users(goal);
+CREATE INDEX idx_users_gender ON Users(gender);
+CREATE INDEX idx_users_age ON Users(age);
+CREATE INDEX idx_users_specialty ON Users(specialty);
+CREATE INDEX idx_users_active ON Users(is_active);
+
+-- Индексы для таблицы Likes
+CREATE INDEX idx_likes_sender ON Likes(sender_id);
+CREATE INDEX idx_likes_receiver ON Likes(receiver_id);
+CREATE INDEX idx_likes_mutual ON Likes(is_mutual);
+
+-- Индекс для таблицы Profile_Views
+CREATE INDEX idx_views_viewer ON Profile_Views(viewer_id);
+CREATE INDEX idx_views_viewed ON Profile_Views(viewed_id);
