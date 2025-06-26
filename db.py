@@ -13,6 +13,6 @@ def create_connection():
         return conn
     except OperationalError as e:
         print(f"Ошибка подключения к базе данных: {e}")
-        return None 
+        return None
 
 create_connection()
